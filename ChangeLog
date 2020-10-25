@@ -1,11 +1,47 @@
 
 
 
-3.5.12git <- NOTE: the release version number will be 3.5.13
+3.6.0git <- NOTE: the release version number will be 3.6.1
 
 
 
 
+
+
+3.6.0 (2020-10-25)
+
+- handle audio packets received out of order, coded by softins (#619)
+
+- most recently connected users appear on the RH side on the fader panel (#673)
+
+- improvements for the server multithreading, coded by kraney (#653)
+
+- removed Display Channel Levels setting and --servername (#638)
+
+- removed support for further server infos in --serverinfo since the preferred
+  way of registering a server is to do it using the protocol messages (#638)
+
+- removed -g, --pingservers since all Central servers must activate this function,
+  now it is activated by default and no command line argument is needed (#638)
+
+- added --mutemyown command line argument to mute my own signal in my personal mix,
+  only supported in headless client mode (#340)
+
+- added "Mountain Dulcimer" instrument icon, created by dora71 (#649)
+
+- added new instrument icons for "Scratching" and "Rapping"
+
+- replaced double types by floats for some of the signal processing, coded by hselasky (#544)
+
+- support permanent channl fader sorting (i.e., not only on request but always) (#666)
+
+- support sorting faders by channel city
+
+- if sorting the faders by instrument, we now sort by the name for the same instruments
+
+- improvements to the Android audio interface, coded by j-santander (#83)
+
+- bug fix: reduced server list is displayed instead of the normal list (#657)
 
 
 3.5.12 (2020-10-03)
@@ -53,7 +89,7 @@
 
 - accessibility improvements, coded by chigkim (#498, #512)
 
-- added Jack audio audio latency calculation, coded by bflamig (#437)
+- added Jack audio latency calculation, coded by bflamig (#437)
 
 - show the server name in the title bar (#559)
 
@@ -72,7 +108,7 @@
 - if network name/address contains spaces, they are removed now,
   coded by dingodoppelt (#462)
 
-- improve compact skin by using smaller font size
+- improve Compact skin by using smaller font size
 
 - improve server audio mix processing for better clipping behavior
 
@@ -88,7 +124,7 @@
 
 - accessibility improvements, coded by chigkim (#499, #510, #514)
 
-- bug fix: fixed a stability issue in the server (should fix #480)
+- bug fix: fixed a stability issue in the server
 
 - bug fix: --showallservers ping column sort is alphabetic (#201)
 
@@ -109,7 +145,7 @@
 
 - redesign of the server dialog (e.g. added welcome message setting)
 
-- save and restore mixer state (like fader, mute, etc.) (#377)
+- save and restore mixer state (like fader, mute, etc.) (#377),
   note that saving/loading of settings only works if not connected
 
 - scale channel instrument picture in Compact skin mode

@@ -28,9 +28,8 @@
 /* Implementation *************************************************************/
 CClientSettingsDlg::CClientSettingsDlg ( CClient*         pNCliP,
                                          CClientSettings* pNSetP,
-                                         QWidget*         parent,
-                                         Qt::WindowFlags  f ) :
-    QDialog   ( parent, f ),
+                                         QWidget*         parent ) :
+    QDialog   ( parent, Qt::Window ), // use Qt::Window to get min/max window buttons
     pClient   ( pNCliP ),
     pSettings ( pNSetP )
 {
@@ -193,12 +192,6 @@ CClientSettingsDlg::CClientSettingsDlg ( CClient*         pNCliP,
 
     cbxSkin->setAccessibleName ( tr ( "Skin combo box" ) );
 
-    // display channel levels
-    chbDisplayChannelLevels->setWhatsThis ( "<b>" + tr ( "Display Channel Levels" ) + ":</b> " +
-        tr ( "If enabled, each client channel will display a pre-fader level bar." ) );
-
-    chbDisplayChannelLevels->setAccessibleName ( tr ( "Display channel levels check box" ) );
-
     // audio channels
     QString strAudioChannels = "<b>" + tr ( "Audio Channels" ) + ":</b> " + tr (
         "Selects the number of audio channels to be used for communication between "
@@ -317,9 +310,6 @@ CClientSettingsDlg::CClientSettingsDlg ( CClient*         pNCliP,
     // init sound card channel selection frame
     UpdateSoundChannelSelectionFrame();
 
-    // Display Channel Levels check box
-    chbDisplayChannelLevels->setCheckState ( pClient->GetDisplayChannelLevels() ? Qt::Checked : Qt::Unchecked );
-
     // Audio Channels combo box
     cbxAudioChannels->clear();
     cbxAudioChannels->addItem ( tr ( "Mono" ) );               // CC_MONO
@@ -385,9 +375,6 @@ CClientSettingsDlg::CClientSettingsDlg ( CClient*         pNCliP,
         this, &CClientSettingsDlg::OnNetBufServerValueChanged );
 
     // check boxes
-    QObject::connect ( chbDisplayChannelLevels, &QCheckBox::stateChanged,
-        this, &CClientSettingsDlg::OnDisplayChannelLevelsStateChanged );
-
     QObject::connect ( chbAutoJitBuf, &QCheckBox::stateChanged,
         this, &CClientSettingsDlg::OnAutoJitBufStateChanged );
 
@@ -666,12 +653,6 @@ void CClientSettingsDlg::OnEnableOPUS64StateChanged ( int value )
     UpdateDisplay();
 }
 
-void CClientSettingsDlg::OnDisplayChannelLevelsStateChanged ( int value )
-{
-    pClient->SetDisplayChannelLevels ( value != Qt::Unchecked );
-    emit DisplayChannelLevelsChanged();
-}
-
 void CClientSettingsDlg::OnCentralServerAddressEditingFinished()
 {
     // store new setting in the client
@@ -707,18 +688,20 @@ void CClientSettingsDlg::SetPingTimeResult ( const int                         i
     // a certain value
     if ( iPingTime > 500 )
     {
-        const QString sErrorText =
-            "<font color=""red""><b>&#62;500 ms</b></font>";
-
+        const QString sErrorText = "<font color=""red""><b>&#62;500 ms</b></font>";
         lblPingTimeValue->setText     ( sErrorText );
         lblOverallDelayValue->setText ( sErrorText );
     }
     else
     {
-        lblPingTimeValue->setText ( QString().setNum ( iPingTime ) + " ms" );
-        lblOverallDelayValue->setText (
-            QString().setNum ( iOverallDelayMs ) + " ms" );
+        lblPingTimeValue->setText     ( QString().setNum ( iPingTime ) + " ms" );
+        lblOverallDelayValue->setText ( QString().setNum ( iOverallDelayMs ) + " ms" );
     }
+
+    // update upstream rate information label (note that we update this together
+    // with the ping time since the network packet sequence number feature might
+    // be enabled at any time which has influence on the upstream rate)
+    lblUpstreamValue->setText ( QString().setNum ( pClient->GetUploadRateKbps() ) + " kbps" );
 
     // set current LED status
     ledOverallDelay->SetLight ( eOverallDelayLEDColor );
@@ -736,11 +719,5 @@ void CClientSettingsDlg::UpdateDisplay()
         lblPingTimeValue->setText     ( "---" );
         lblOverallDelayValue->setText ( "---" );
         lblUpstreamValue->setText     ( "---" );
-    }
-    else
-    {
-        // update upstream rate information label (only if client is running)
-        lblUpstreamValue->setText (
-            QString().setNum ( pClient->GetUploadRateKbps() ) + " kbps" );
     }
 }

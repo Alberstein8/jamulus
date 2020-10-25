@@ -36,6 +36,9 @@
 #include <QSystemTrayIcon>
 #include <QSettings>
 #include <QFileDialog>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+# include <QVersionNumber>
+#endif
 #include "global.h"
 #include "server.h"
 #include "settings.h"
@@ -62,8 +65,7 @@ public:
     CServerDlg ( CServer*         pNServP,
                  CServerSettings* pNSetP,
                  const bool       bStartMinimized,
-                 QWidget*         parent = nullptr,
-                 Qt::WindowFlags  f = nullptr );
+                 QWidget*         parent = nullptr );
 
 protected:
     virtual void changeEvent ( QEvent* pEvent );

@@ -1,4 +1,4 @@
-VERSION = 3.5.12git
+VERSION = 3.6.0git
 
 # use target name which does not use a captital letter at the beginning
 contains(CONFIG, "noupcasename") {
@@ -154,7 +154,9 @@ win32 {
     target.path = /tmp/your_executable # path on device
     INSTALLS += target
 
-    HEADERS += android/sound.h
+    HEADERS += android/sound.h \
+        android/ring_buffer.h
+
     SOURCES += android/sound.cpp \
         android/androiddebug.cpp
 
@@ -186,10 +188,12 @@ win32 {
         libs/oboe/src/fifo/FifoController.cpp \
         libs/oboe/src/fifo/FifoControllerBase.cpp \
         libs/oboe/src/fifo/FifoControllerIndirect.cpp \
+        libs/oboe/src/flowgraph/ChannelCountConverter.cpp \
         libs/oboe/src/flowgraph/ClipToRange.cpp \
         libs/oboe/src/flowgraph/FlowGraphNode.cpp \
         libs/oboe/src/flowgraph/ManyToMultiConverter.cpp \
         libs/oboe/src/flowgraph/MonoToMultiConverter.cpp \
+        libs/oboe/src/flowgraph/MultiToMonoConverter.cpp \
         libs/oboe/src/flowgraph/RampLinear.cpp \
         libs/oboe/src/flowgraph/SampleRateConverter.cpp \
         libs/oboe/src/flowgraph/SinkFloat.cpp \
@@ -233,10 +237,12 @@ win32 {
         libs/oboe/src/fifo/FifoController.h \
         libs/oboe/src/fifo/FifoControllerBase.h \
         libs/oboe/src/fifo/FifoControllerIndirect.h \
+        libs/oboe/src/flowgraph/ChannelCountConverter.h \
         libs/oboe/src/flowgraph/ClipToRange.h \
         libs/oboe/src/flowgraph/FlowGraphNode.h \
         libs/oboe/src/flowgraph/ManyToMultiConverter.h \
         libs/oboe/src/flowgraph/MonoToMultiConverter.h \
+        libs/oboe/src/flowgraph/MultiToMonoConverter.h \
         libs/oboe/src/flowgraph/RampLinear.h \
         libs/oboe/src/flowgraph/SampleRateConverter.h \
         libs/oboe/src/flowgraph/SinkFloat.h \
@@ -695,9 +701,12 @@ DISTFILES += ChangeLog \
     src/res/instruments/keyboard.png \
     src/res/instruments/listener.png \
     src/res/instruments/microphone.png \
+    src/res/instruments/mountaindulcimer.png \
     src/res/instruments/none.png \
+    src/res/instruments/rapping.png \
     src/res/instruments/recorder.png \
     src/res/instruments/saxophone.png \
+    src/res/instruments/scratching.png \
     src/res/instruments/streamer.png \
     src/res/instruments/synthesizer.png \
     src/res/instruments/trombone.png \
@@ -1019,3 +1028,5 @@ contains(CONFIG, "disable_version_check") {
     message(The version check is disabled.)
     DEFINES += DISABLE_VERSION_CHECK
 }
+
+ANDROID_ABIS = armeabi-v7a arm64-v8a x86 x86_64

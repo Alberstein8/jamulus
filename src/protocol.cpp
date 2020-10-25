@@ -176,9 +176,9 @@ MESSAGES (with connection)
         ... ------------------+-----------------------+ ...
         ...  4 bytes sam rate | 2 bytes audiocod type | ...
         ... ------------------+-----------------------+ ...
-        ... -----------------+----------------------+
-        ...  2 bytes version | 4 bytes audiocod arg |
-        ... -----------------+----------------------+
+        ... ---------------+----------------------+
+        ...  2 bytes flags | 4 bytes audiocod arg |
+        ... ---------------+----------------------+
 
     - "base netw size":  length of the base network packet (frame) in bytes
     - "block size fact": block size factor
@@ -190,8 +190,9 @@ MESSAGES (with connection)
                           - 1: CELT
                           - 2: OPUS
                           - 3: OPUS64
-    - "version":         version of the audio coder, if not used this value
-                         shall be set to 0
+    - "flags":           flags indicating network properties:
+                          - 0: none
+                          - 1: WITH_COUNTER (a packet counter is added to the audio packet)
     - "audiocod arg":    argument for the audio coder, if not used this value
                          shall be set to 0
 
@@ -216,15 +217,6 @@ MESSAGES (with connection)
     +---------------------+
     | 1 byte licence type |
     +---------------------+
-
-
-- PROTMESSID_REQ_CHANNEL_LEVEL_LIST: Opt in or out of the channel level list
-
-    +---------------+
-    | 1 byte option |
-    +---------------+
-
-    option is boolean, true to opt in, false to opt out
 
 
 - PROTMESSID_VERSION_AND_OS: Version number and operating system
@@ -842,10 +834,6 @@ if ( rand() < ( RAND_MAX / 2 ) ) return false;
                     EvaluateLicenceRequiredMes ( vecbyMesBodyDataRef );
                     break;
 
-                case PROTMESSID_REQ_CHANNEL_LEVEL_LIST:
-                    EvaluateReqChannelLevelListMes ( vecbyMesBodyDataRef );
-                    break;
-
                 case PROTMESSID_VERSION_AND_OS:
                     EvaluateVersionAndOSMes ( vecbyMesBodyDataRef );
                     break;
@@ -1035,7 +1023,7 @@ bool CProtocol::EvaluateClientIDMes ( const CVector<uint8_t>& vecData )
     return false; // no error
 }
 
-void CProtocol::CreateChanGainMes ( const int iChanID, const double dGain )
+void CProtocol::CreateChanGainMes ( const int iChanID, const float fGain )
 {
     CVector<uint8_t> vecData ( 3 ); // 3 bytes of data
     int              iPos = 0;      // init position pointer
@@ -1045,7 +1033,7 @@ void CProtocol::CreateChanGainMes ( const int iChanID, const double dGain )
     PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( iChanID ), 1 );
 
     // actual gain, we convert from double with range 0..1 to integer
-    const int iCurGain = static_cast<int> ( dGain * ( 1 << 15 ) );
+    const int iCurGain = static_cast<int> ( fGain * ( 1 << 15 ) );
 
     PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( iCurGain ), 2 );
 
@@ -1069,15 +1057,15 @@ bool CProtocol::EvaluateChanGainMes ( const CVector<uint8_t>& vecData )
     const int iData = static_cast<int> ( GetValFromStream ( vecData, iPos, 2 ) );
 
     // we convert the gain from integer to double with range 0..1
-    const double dNewGain = static_cast<double> ( iData ) / ( 1 << 15 );
+    const float fNewGain = static_cast<float> ( iData ) / ( 1 << 15 );
 
     // invoke message action
-    emit ChangeChanGain ( iCurID, dNewGain );
+    emit ChangeChanGain ( iCurID, fNewGain );
 
     return false; // no error
 }
 
-void CProtocol::CreateChanPanMes ( const int iChanID, const double dPan )
+void CProtocol::CreateChanPanMes ( const int iChanID, const float fPan )
 {
     CVector<uint8_t> vecData ( 3 ); // 3 bytes of data
     int              iPos = 0;      // init position pointer
@@ -1086,8 +1074,8 @@ void CProtocol::CreateChanPanMes ( const int iChanID, const double dPan )
     // channel ID
     PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( iChanID ), 1 );
 
-    // actual gain, we convert from double with range 0..1 to integer
-    const int iCurPan = static_cast<int> ( dPan * ( 1 << 15 ) );
+    // actual pan, we convert from double with range 0..1 to integer
+    const int iCurPan = static_cast<int> ( fPan * ( 1 << 15 ) );
 
     PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( iCurPan ), 2 );
 
@@ -1110,11 +1098,11 @@ bool CProtocol::EvaluateChanPanMes ( const CVector<uint8_t> &vecData )
     // pan (read integer value)
     const int iData = static_cast<int> ( GetValFromStream ( vecData, iPos, 2 ) );
 
-    // we convert the gain from integer to double with range 0..1
-    const double dNewPan = static_cast<double> ( iData ) / ( 1 << 15 );
+    // we convert the pan from integer to double with range 0..1
+    const float fNewPan = static_cast<float> ( iData ) / ( 1 << 15 );
 
     // invoke message action
-    emit ChangeChanPan ( iCurID, dNewPan );
+    emit ChangeChanPan ( iCurID, fNewPan );
 
     return false; // no error
 }
@@ -1479,8 +1467,8 @@ void CProtocol::CreateNetwTranspPropsMes ( const CNetworkTransportProps& NetTrPr
     // audio coding type (2 bytes)
     PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( NetTrProps.eAudioCodingType ), 2 );
 
-    // version (2 bytes)
-    PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( NetTrProps.iVersion ), 2 );
+    // flags (2 bytes)
+    PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( NetTrProps.eFlags ), 2 );
 
     // argument for the audio coder (4 bytes)
     PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( NetTrProps.iAudioCodingArg ), 4 );
@@ -1500,7 +1488,7 @@ bool CProtocol::EvaluateNetwTranspPropsMes ( const CVector<uint8_t>& vecData )
         1 /* num chan */ +
         4 /* sam rate */ +
         2 /* audiocod type */ +
-        2 /* version */ +
+        2 /* flags */ +
         4 /* audiocod arg */;
 
     // check size
@@ -1562,9 +1550,9 @@ bool CProtocol::EvaluateNetwTranspPropsMes ( const CVector<uint8_t>& vecData )
     ReceivedNetwTranspProps.eAudioCodingType =
         static_cast<EAudComprType> ( iRecCodingType );
 
-    // version (2 bytes)
-    ReceivedNetwTranspProps.iVersion =
-        static_cast<uint32_t> ( GetValFromStream ( vecData, iPos, 2 ) );
+    // flags (2 bytes)
+    ReceivedNetwTranspProps.eFlags =
+        static_cast<ENetwFlags> ( GetValFromStream ( vecData, iPos, 2 ) );
 
     // argument for the audio coder (4 bytes)
     ReceivedNetwTranspProps.iAudioCodingArg =
@@ -1660,38 +1648,15 @@ void CProtocol::CreateOpusSupportedMes()
     CreateAndSendMessage ( PROTMESSID_OPUS_SUPPORTED, CVector<uint8_t> ( 0 ) );
 }
 
-void CProtocol::CreateReqChannelLevelListMes ( const bool bRCL )
+// TODO needed for compatibility to old servers >= 3.4.6 and <= 3.5.12
+void CProtocol::CreateReqChannelLevelListMes()
 {
     CVector<uint8_t> vecData ( 1 ); // 1 byte of data
     int              iPos = 0; // init position pointer
 
-    PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( bRCL ), 1 );
+    PutValOnStream ( vecData, iPos, static_cast<uint32_t> ( true ), 1 );
 
     CreateAndSendMessage ( PROTMESSID_REQ_CHANNEL_LEVEL_LIST, vecData );
-}
-
-bool CProtocol::EvaluateReqChannelLevelListMes ( const CVector<uint8_t>& vecData )
-{
-    int iPos = 0; // init position pointer
-
-    // check size
-    if ( vecData.Size() != 1 )
-    {
-        return true; // return error code
-    }
-
-    // extract opt in / out for channel levels
-    uint32_t val = GetValFromStream ( vecData, iPos, 1 );
-
-    if ( val != 0 && val != 1 )
-    {
-        return true; // return error code
-    }
-
-    // invoke message action
-    emit ReqChannelLevelList ( static_cast<bool> ( val ) );
-
-    return false; // no error
 }
 
 void CProtocol::CreateVersionAndOSMes()

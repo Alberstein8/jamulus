@@ -280,6 +280,13 @@ void CClientSettings::ReadSettingsFromXML ( const QDomDocument&   IniXMLDocument
     strLanguage = GetIniSetting ( IniXMLDocument, "client", "language",
                                   CLocale::FindSysLangTransFileName ( CLocale::GetAvailableTranslations() ).first );
 
+    // fader channel sorting
+    if ( GetNumericIniSet ( IniXMLDocument, "client", "channelsort",
+         0, 4 /* ST_BY_CITY */, iValue ) )
+    {
+        eChannelSortType = static_cast<EChSortType> ( iValue );
+    }
+
     // name
     pClient->ChannelInfo.strName = FromBase64ToString (
         GetIniSetting ( IniXMLDocument, "client", "name_base64",
@@ -429,12 +436,6 @@ void CClientSettings::ReadSettingsFromXML ( const QDomDocument&   IniXMLDocument
          0, 2 /* GD_SLIMFADER */, iValue ) )
     {
         pClient->SetGUIDesign ( static_cast<EGUIDesign> ( iValue ) );
-    }
-
-    // display channel levels preference
-    if ( GetFlagIniSet ( IniXMLDocument, "client", "displaychannellevels", bValue ) )
-    {
-        pClient->SetDisplayChannelLevels ( bValue );
     }
 
     // audio channels
@@ -605,6 +606,10 @@ void CClientSettings::WriteSettingsToXML ( QDomDocument& IniXMLDocument )
     PutIniSetting ( IniXMLDocument, "client", "language",
         strLanguage );
 
+    // fader channel sorting
+    SetNumericIniSet ( IniXMLDocument, "client", "channelsort",
+        static_cast<int> ( eChannelSortType ) );
+
     // name
     PutIniSetting ( IniXMLDocument, "client", "name_base64",
         ToBase64 ( pClient->ChannelInfo.strName ) );
@@ -680,10 +685,6 @@ void CClientSettings::WriteSettingsToXML ( QDomDocument& IniXMLDocument )
     // GUI design
     SetNumericIniSet ( IniXMLDocument, "client", "guidesign",
         static_cast<int> ( pClient->GetGUIDesign() ) );
-
-    // display channel levels preference
-    SetFlagIniSet ( IniXMLDocument, "client", "displaychannellevels",
-        pClient->GetDisplayChannelLevels() );
 
     // audio channels
     SetNumericIniSet ( IniXMLDocument, "client", "audiochannels",
